@@ -1,0 +1,22 @@
+{
+  "name": "pibiz_server",
+  "version": "1.0.1",
+  "description": "PiBIZ Server",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "author": "Apptitude Infotech",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^5.0.0",
+    "dotenv": "^8.2.0",
+    "formidable": "^1.2.2",
+    "jsonwebtoken": "^8.5.1",
+    "lokijs": "^1.5.11",
+    "nanoid": "^3.1.20",
+    "validatorjs": "^3.18.1"
+  },
+  "private": true
+}
