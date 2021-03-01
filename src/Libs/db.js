@@ -50,8 +50,8 @@ function setCollection(jModel, transForm = true) {
     const { identity, unique = [], indices = [], ttl = false } = jModel;
 
     const _OPTS = { disableMeta: true, unique, indices };
-    if (ttl && typeof ttl == 'number') {
-        _OPTS.ttl = ttl;
+    if (ttl && Number(ttl) && Number(ttl) > 500) {
+        _OPTS.ttl = Number(ttl);
     }
     const Collection = db.addCollection(`${identity}`, _OPTS);
     Collection.ensureAllIndexes(true);

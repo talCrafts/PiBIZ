@@ -12,16 +12,16 @@ const AdminRoutes = require("./Admin/adminRoutes");
 
 /*
 ______________________________________  ENV */
-const ADMIN_ACCESS_TOKEN = process.env.ADMIN_ACCESS_TOKEN;
-const ACCESS_TOKEN = process.env.ACCESS_TOKEN;
+const ADMIN_API_KEY = process.env.ADMIN_API_KEY;
+const API_KEY = process.env.API_KEY;
 
 
 
 // POST|GET /api/admin
 const execAdminApi = async (req, res) => {
-    const { fireUser, isAccessToken, endPoint3, endPoint4 } = req.ctx;
+    const { fireUser, apiKey, endPoint3, endPoint4 } = req.ctx;
 
-    if (isAccessToken != ADMIN_ACCESS_TOKEN) {
+    if (apiKey != ADMIN_API_KEY) {
         return Helper.ThrowErr('No  Access Token');
     }
 
@@ -52,9 +52,9 @@ const execAdminApi = async (req, res) => {
 
 // POST|GET /api - API 
 const execApi = async (req, res) => {
-    const { fireUser, isAccessToken, endPoint2, endPoint3, endPoint4 } = req.ctx;
+    const { fireUser, apiKey, endPoint2, endPoint3, endPoint4 } = req.ctx;
 
-    if (isAccessToken != ACCESS_TOKEN) {
+    if (apiKey != API_KEY) {
         return Helper.ThrowErr('No  Access Token');
     }
 
@@ -81,14 +81,14 @@ const execApi = async (req, res) => {
 };
 
 
-const GetAccessToken = (headers, query) => {
-    let accessToken;
-    if (headers['accesstoken']) {
-        accessToken = headers['accesstoken'];
-    } else if (query['accesstoken']) {
-        accessToken = query['accesstoken'];
+const GetApiKey = (headers, query) => {
+    let apiKey;
+    if (headers['apikey']) {
+        apiKey = headers['apikey'];
+    } else if (query['apikey']) {
+        apiKey = query['apikey'];
     }
-    return accessToken;
+    return apiKey;
 };
 
 const GetIdToken = (headers, query) => {
@@ -209,7 +209,7 @@ exports.execAdminApi = execAdminApi;
 exports.execApi = execApi;
 
 
-exports.GetAccessToken = GetAccessToken;
+exports.GetApiKey = GetApiKey;
 exports.GetIdToken = GetIdToken;
 exports.GetParams = GetParams;
 

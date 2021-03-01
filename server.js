@@ -17,9 +17,9 @@ initDb((error) => {
     const server = http.createServer(async (req, res) => {
         const reqUrl = url.parse(req.url, true);
 
-        let isAccessToken = Router.GetAccessToken(req.headers, reqUrl.query);
-        if (!isAccessToken) {
-            return Helper.SendErr(res, 401, "Unauthorized Access");
+        let apiKey = Router.GetApiKey(req.headers, reqUrl.query);
+        if (!apiKey) {
+            return Helper.SendErr(res, 401, "Unauthorized API Access");
         }
 
         let fireUser;
@@ -31,7 +31,7 @@ initDb((error) => {
                     fireUser = decoded;
                 }
             } catch (error) {
-                Helper.SendErr(res, 401, "Unauthentic Access");
+                Helper.SendErr(res, 401, "Unauthorized Access");
             }
         }
 
@@ -54,7 +54,7 @@ initDb((error) => {
                     const endPoint3 = pSplits[3];  //endPoint3
                     //->  api/admin/[exec|asset]/[:action|:asset]
                     const endPoint4 = pSplits[4];  //endPoint4
-                    req.ctx = { params, fireUser, isAccessToken, endPoint3, endPoint4 };
+                    req.ctx = { params, fireUser, apiKey, endPoint3, endPoint4 };
 
                     await Router.execAdminApi(req, res);
                     return;
@@ -67,7 +67,7 @@ initDb((error) => {
                     const endPoint3 = pSplits[3]; //-> endPoint3
                     //->  api/exec/:ctrl/:action
                     const endPoint4 = pSplits[4]; //-> endPoint4
-                    req.ctx = { params, fireUser, isAccessToken, endPoint2, endPoint3, endPoint4 };
+                    req.ctx = { params, fireUser, apiKey, endPoint2, endPoint3, endPoint4 };
 
                     await Router.execApi(req, res);
                     return;

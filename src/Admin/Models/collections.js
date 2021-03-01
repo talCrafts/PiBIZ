@@ -17,6 +17,9 @@ const jModel = {
         rule: 'boolean',
         fieldType: 'boolean'
     }, {
+        name: 'ttl',
+        rule: 'numeric',
+    }, {
         name: 'fields',
         rule: 'array',
         fieldType: 'array'
