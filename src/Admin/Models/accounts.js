@@ -1,10 +1,3 @@
-/*______________________________________  ENV */
-const USER_GROUPS = process.env.USER_GROUPS;
-
-
-const GrpsForAccounts = USER_GROUPS.split(",");
-GrpsForAccounts.push('admin');
-
 const Status = ['on', 'off'];
 
 const jModel = {
@@ -22,9 +15,8 @@ const jModel = {
         fieldType: 'password'
     }, {
         name: 'group',
-        rule: `string|required|in:${GrpsForAccounts.join()}`,
+        rule: `string|required|not_in:public`,
         fieldType: 'select',
-        options: GrpsForAccounts.map(obj => ({ label: `${obj}`, value: `${obj}` })),
         indexed: true
     }, {
         name: 'displayName',

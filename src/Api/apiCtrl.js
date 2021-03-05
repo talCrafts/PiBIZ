@@ -18,8 +18,6 @@ Migrate();
 async function Migrate() {
     let Collections = DB.getCollection('collections');
     if (Collections) {
-        // Collections.chain().find({ identity: "apikeys" }).remove();
-        //Collections.insert(jModelApikeys);
         DB.setCollections();
     } else {
         //Step-1

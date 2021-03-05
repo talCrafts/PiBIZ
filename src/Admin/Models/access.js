@@ -1,9 +1,3 @@
-/*______________________________________  ENV */
-const USER_GROUPS = process.env.USER_GROUPS;
-
-const GrpsForAccess = USER_GROUPS.split(",");
-GrpsForAccess.push('public');
-
 const Acts = ['find', 'findOne', 'create', 'update', 'remove', 'count'];
 const AccActs = ['deny', 'own', 'group', 'allow'];
 const AccMode = ['pick', 'omit'];
@@ -29,9 +23,8 @@ const jModel = {
         indexed: true
     }, {
         name: 'group',
-        rule: `string|required|in:${GrpsForAccess.join()}`,
+        rule: `string|required|not_in:admin`,
         fieldType: 'select',
-        options: GrpsForAccess.map(obj => ({ label: `${obj}`, value: `${obj}` })),
         indexed: true
     }, {
         name: 'access',

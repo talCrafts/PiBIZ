@@ -8,13 +8,6 @@ Validator.register('object', function (value) {
     return (typeof value == 'object' && !Array.isArray(value));
 }, 'The :attribute is not an object');
 
-
-
-/*
-______________________________________  ENV */
-const USER_GROUPS = process.env.USER_GROUPS;
-
-
 const MetaFields = {
     $loki: 'numeric',
     _id: 'numeric',
@@ -23,7 +16,6 @@ const MetaFields = {
     createdBy: 'numeric',
     updatedBy: 'numeric'
 }
-
 
 
 
@@ -41,14 +33,20 @@ exports.GetCollection = (identity) => {
 
 //______________________________________  Get Access Groups
 exports.getAccessGroups = () => {
-    const grps = USER_GROUPS.split(",");
+    const grps = GetCollection('groups').find().map(function (obj) {
+        return obj.name;
+    });
+
     grps.splice(0, 0, 'public');
     return grps;
 };
 
 //______________________________________  Get Account Groups
 exports.getAccountGroups = () => {
-    const grps = USER_GROUPS.split(",");
+    const grps = GetCollection('groups').find().map(function (obj) {
+        return obj.name;
+    });
+
     grps.splice(0, 0, 'admin');
     return grps;
 };

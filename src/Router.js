@@ -13,8 +13,6 @@ const AdminRoutes = require("./Admin/adminRoutes");
 /*
 ______________________________________  ENV */
 const ADMIN_API_KEY = process.env.ADMIN_API_KEY;
-const API_KEY = process.env.API_KEY;
-
 
 
 // POST|GET /api/admin
@@ -54,14 +52,19 @@ const execAdminApi = async (req, res) => {
 const execApi = async (req, res) => {
     const { fireUser, apiKey, endPoint2, endPoint3, endPoint4 } = req.ctx;
 
-    if (apiKey != API_KEY) {
+    const hasKey = PibizHelper.GetCollection('apikeys').findOne({ key: apiKey });
+    if (!hasKey || !hasKey._id || apiKey != hasKey.key) {
         return Helper.ThrowErr('No  Access Token');
     }
+
 
     if (endPoint2 === 'login' && req.method === 'POST') {
         return ApiRoutes.login(req, res);
     } else if (endPoint2 === 'exec' && req.method === 'POST') {
         if (endPoint3 && endPoint4) {
+            if (hasKey.ismaster != 'on' && (hasKey.scope || []).includes(endPoint3) === false) {
+                return Helper.ThrowErr('Invalid  Access Scope');
+            }
             req.ctx.ctrl = endPoint3;
             req.ctx.action = endPoint4;
             return ApiRoutes.exec(req, res);
