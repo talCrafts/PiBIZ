@@ -7,7 +7,8 @@ const jModelAccess = require("../Admin/Models/access");
 const jModelAccounts = require("../Admin/Models/accounts");
 const jModelAssets = require("../Admin/Models/assets");
 const jModelCollections = require("../Admin/Models/collections");
-
+const jModelApikeys = require("../Admin/Models/apikeys");
+const jModelGroups = require("../Admin/Models/groups");
 
 
 
@@ -17,6 +18,8 @@ Migrate();
 async function Migrate() {
     let Collections = DB.getCollection('collections');
     if (Collections) {
+        // Collections.chain().find({ identity: "apikeys" }).remove();
+        //Collections.insert(jModelApikeys);
         DB.setCollections();
     } else {
         //Step-1
@@ -28,6 +31,8 @@ async function Migrate() {
         Collections.insert(jModelAccess);
         Collections.insert(jModelAccounts);
         Collections.insert(jModelAssets);
+        Collections.insert(jModelApikeys);
+        Collections.insert(jModelGroups);
 
         //Step-3
         DB.setCollections();
