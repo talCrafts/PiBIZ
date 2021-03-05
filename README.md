@@ -59,7 +59,7 @@ API Key
 API Endpoints
 ----------
 
-- `User Login` ::  Authenticate & Returns Auth Token   
+- `POST Login` ::  Authenticate & Returns Auth Token   
         
     ```js
     fetch('/api/login', {
@@ -71,7 +71,7 @@ API Endpoints
     })   
     ```
 
-- `CRUD Exec` :: Executes actions `find`, `findOne`, `create`, `update`, `remove` and `count`
+- `POST Exec` :: Executes actions `find`, `findOne`, `create`, `update`, `remove` and `count`
         
      ```js
     fetch('/api/exec/{collection}/{action}', {
@@ -97,11 +97,20 @@ API Endpoints
     fetch('/api/exec/accounts/findOne', {
         method: 'post',
         body: JSON.stringify({           
-            query: { _id_: 'uid1' },           
+            query: { _id: 'uid1' },           
             pick: [ 'displayName', 'group' ]
         })    
     })   
     ```
+
+- `GET Asset` ::  Get Asset File   
+        
+    ```js
+    fetch('/api/asset/{assetId}', {
+        method: 'GET'             
+    })   
+    ```
+
 
 #
     
@@ -169,7 +178,7 @@ ADMIN API Endpoints
         method: 'post',
         body: JSON.stringify({
             identity: 'collectionName',
-            query: { _id_: 'uid1' },           
+            query: { _id: 'uid1' },           
             omit: [ 'field3' ]
         })    
     })   
