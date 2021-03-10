@@ -21,4 +21,3 @@ const size = (collection) => {
 exports.pick = pick;
 exports.omit = omit;
 exports.size = size;
-

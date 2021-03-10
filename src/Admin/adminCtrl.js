@@ -99,3 +99,9 @@ exports.removeEntry = async ({ identity, ...params }, fireUser) => {
     const result = await Krud.remove(identity, params, fireUser);
     return result;
 };
+
+//______________________________________  Count Entries By Identity
+exports.countEntries = async ({ identity, ...params }, fireUser) => {
+    const result = await Krud.count(identity, params, fireUser);
+    return result;
+};

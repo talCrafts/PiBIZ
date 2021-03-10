@@ -5,25 +5,32 @@ const url = require('url');
 
 
 const { initDb } = require("./src/Libs/db");
-const Helper = require('./src/Utils/helper');
+
+/*
+______________________________________  ENV */
+const ADMIN_API_KEY = process.env.ADMIN_API_KEY;
 
 
 initDb((error) => {
     if (error) throw error;
 
-    //Main Router Entry File
-    const Router = require("./src/Router");
+    //API Routes Entry File    
+    const ApiRoutes = require("./src/apiRoutes");
+
+    const Helper = require('./src/Utils/helper');
+    const PibizHelper = require('./src/Utils/pibizHelper');
+
 
     const server = http.createServer(async (req, res) => {
         const reqUrl = url.parse(req.url, true);
 
-        let apiKey = Router.GetApiKey(req.headers, reqUrl.query);
+        let apiKey = ApiRoutes.GetApiKey(req.headers, reqUrl.query);
         if (!apiKey) {
             return Helper.SendErr(res, 401, "Unauthorized API Access");
         }
 
         let fireUser;
-        let idToken = Router.GetIdToken(req.headers, reqUrl.query);
+        let idToken = ApiRoutes.GetIdToken(req.headers, reqUrl.query);
         if (idToken) {
             try {
                 const decoded = await Helper.VerifyAuth(idToken);
@@ -35,42 +42,93 @@ initDb((error) => {
             }
         }
 
-
         const pSplits = reqUrl.pathname.split("/", 5);
-        const endPoint1 = pSplits[1]; //-> api       
 
+        //-> /api
+        const endPoint1 = pSplits[1];
         if (endPoint1 === 'api' && (req.method === 'POST' || req.method === 'GET')) {
-            let params = {};
-            if (req.method === 'POST') {
-                params = await Router.GetParams(req, res, fireUser);
-            }
-
             try {
-                //->  api/[admin|[login|exec|asset]]
-                const endPoint2 = pSplits[2]; //endPoint2
+                let params = {};
+                if (req.method === 'POST') {
+                    params = await ApiRoutes.GetParams(req, res, fireUser);
+                }
 
+                //->  /[admin|[login|exec|asset]]
+                const endPoint2 = pSplits[2];
                 if (endPoint2 === 'admin') {
-                    //->  api/admin/[login|exec|asset]
-                    const endPoint3 = pSplits[3];  //endPoint3
-                    //->  api/admin/[exec|asset]/[:action|:asset]
-                    const endPoint4 = pSplits[4];  //endPoint4
-                    req.ctx = { params, fireUser, apiKey, endPoint3, endPoint4 };
-
-                    await Router.execAdminApi(req, res);
-                    return;
-                } else if (endPoint2 === 'login' || endPoint2 === 'exec' || endPoint2 === 'asset') {
-                    if (fireUser && fireUser.group == 'admin') {
-                        return Helper.ThrowErr('Invalid  OPAccess2');
+                    if (apiKey != ADMIN_API_KEY) {
+                        await Helper.DelayRes();
+                        return Helper.ThrowErr('No  Access Token Key');
                     }
 
-                    //->  api/[exec|asset]/[:ctrl|:asset]
-                    const endPoint3 = pSplits[3]; //-> endPoint3
-                    //->  api/exec/:ctrl/:action
-                    const endPoint4 = pSplits[4]; //-> endPoint4
-                    req.ctx = { params, fireUser, apiKey, endPoint2, endPoint3, endPoint4 };
+                    const endPoint3 = pSplits[3];
 
-                    await Router.execApi(req, res);
-                    return;
+                    if (endPoint3 === 'login' && req.method === 'POST') {
+                        req.ctx = { params };
+                        await ApiRoutes.AdminLogin(req, res);
+                        return;
+                    } else if (endPoint3 === 'exec' && req.method === 'POST') {
+                        if (!fireUser || fireUser.group != 'admin') {
+                            await Helper.DelayRes();
+                            return Helper.ThrowErr('Invalid  OPAccess A1');
+                        }
+
+                        const action = pSplits[4];
+                        req.ctx = { action, fireUser, params };
+                        await ApiRoutes.AdminExec(req, res);
+                        return;
+                    } else if (endPoint3 === 'asset' && req.method === 'GET') {
+                        if (!fireUser || fireUser.group != 'admin') {
+                            await Helper.DelayRes();
+                            return Helper.ThrowErr('Invalid  OPAccess A1');
+                        }
+
+                        const asset = pSplits[4];
+                        req.ctx = { asset };
+                        await ApiRoutes.AdminAsset(req, res);
+                        return;
+                    }
+
+                    return Helper.ThrowErr('Invalid  OPAccess L1');
+                } else if (endPoint2 === 'login' || endPoint2 === 'exec' || endPoint2 === 'asset') {
+                    if (fireUser && fireUser.group === 'admin') {
+                        return Helper.ThrowErr('Invalid  OPAccess A2');
+                    }
+
+                    const hasKey = PibizHelper.GetCollection('apikeys').findOne({ key: apiKey });
+                    if (!hasKey || !hasKey._id) {
+                        await Helper.DelayRes();
+                        return Helper.ThrowErr('No  Access Token Key');
+                    }
+
+                    if (endPoint2 === 'login' && req.method === 'POST') {
+                        req.ctx = { params };
+                        await ApiRoutes.Login(req, res);
+                        return;
+                    } else if (endPoint2 === 'exec' && req.method === 'POST') {
+                        const ctrl = pSplits[3];
+                        if (hasKey.ismaster != 'on' && (hasKey.scope || []).includes(ctrl) === false) {
+                            await Helper.DelayRes();
+                            return Helper.ThrowErr('Invalid  Access Scope');
+                        }
+                        const action = pSplits[4];
+
+                        req.ctx = { ctrl, action, fireUser, params };
+                        await ApiRoutes.Exec(req, res);
+                        return;
+                    } else if (endPoint2 === 'asset' && req.method === 'GET') {
+                        if (!fireUser || !fireUser.group) {
+                            await Helper.DelayRes();
+                            return Helper.ThrowErr('Invalid  OPAccess A2');
+                        }
+
+                        const asset = pSplits[3];
+                        req.ctx = { asset };
+
+                        await ApiRoutes.Asset(req, res);
+                        return;
+                    }
+                    return Helper.ThrowErr('Invalid  OPAccess L1');
                 }
             } catch (error) {
                 Helper.SendErr(res, 401, (error.name == 'pibizError' ? error.message : "Not Allowed"));
