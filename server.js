@@ -131,10 +131,10 @@ initDb((error) => {
                     return Helper.ThrowErr('Invalid  OPAccess L1');
                 }
             } catch (error) {
-                Helper.SendErr(res, 401, (error.name == 'pibizError' ? error.message : "Not Allowed"));
+                return Helper.SendErr(res, 401, (error.name == 'pibizError' ? error.message : "Not Allowed"));
             }
         } else {
-            Helper.SendErr(res, 404, "Not Found");
+            return Helper.SendErr(res, 404, "Not Found");
         }
     });
 
