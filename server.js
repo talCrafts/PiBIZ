@@ -4,7 +4,7 @@ const http = require('http');
 const eetase = require('eetase');
 const socketClusterServer = require('socketcluster-server');
 const cron = require('node-cron');
-
+const fse = require('fs-extra')
 
 const { initDb } = require("./src/Libs/db");
 
@@ -32,8 +32,6 @@ initDb((error) => {
     const Api = require("./src/ScMods/api");
 
     const HttpApp = require("./serverHTTP");
-
-    const Sync = require("./src/Libs/Sync");
 
 
     //Attach ACL
@@ -78,11 +76,23 @@ initDb((error) => {
         })();
     }
 
+
     //__________________________________________ CRON SCHEDULE
     cron.schedule(
         '* * * * *',
-        async () => {
-            await Sync();
+        () => {
+            (async () => {
+                try {
+                    const noww = new Date();
+                    const BkpPath = `/mnt/pibizdisk/Y${noww.getFullYear()}/M${noww.getMonth() + 1}`;
+
+                    await fse.copy('./_STORAGE/', BkpPath)
+                    console.log('BKP success!', BkpPath)
+                } catch (err) {
+                    console.log('BKP Failed!')
+                    console.error(err)
+                }
+            })()
         },
         { scheduled: true, timezone: "Asia/Kolkata" }
     );
