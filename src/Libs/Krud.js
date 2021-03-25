@@ -91,6 +91,8 @@ const create = async (identity, { item }, fireUser) => {
         DB.setCollection(jM, true);
     }
 
+
+
     return res.$loki;
 }
 
@@ -159,6 +161,7 @@ const update = async (identity, { query = {}, item }, fireUser) => {
         DB.setCollection(jM, true);
     }
 
+
     return true;
 
 }
@@ -170,6 +173,7 @@ const remove = async (identity, { query = {} }, fireUser) => {
         DB.removeCollection(jM.identity);
     }
     PibizHelper.GetCollection(identity).chain().find(query).remove();
+
     return true;
 }
 

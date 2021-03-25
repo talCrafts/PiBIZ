@@ -1,7 +1,7 @@
 {
   "name": "pibiz_server",
   "version": "1.0.1",
-  "description": "PiBIZ Server",
+  "description": "PiBIZ RealTime Server",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -10,13 +10,18 @@
   "author": "Apptitude Infotech",
   "license": "ISC",
   "dependencies": {
-    "bcrypt": "^5.0.0",
     "dotenv": "^8.2.0",
+    "eetase": "^4.0.0",
     "formidable": "^1.2.2",
-    "jsonwebtoken": "^8.5.1",
     "lokijs": "^1.5.11",
     "nanoid": "^3.1.20",
+    "node-cron": "^3.0.0",
+    "rsync": "^0.6.1",
+    "socketcluster-server": "^16.0.1",
+    "sodium-native": "^3.2.1",
+    "sodium-plus": "^0.9.0",
     "validatorjs": "^3.18.1"
   },
-  "private": true
+  "private": true,
+  "keywords": []
 }

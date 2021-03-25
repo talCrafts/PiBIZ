@@ -1,5 +1,7 @@
 const loki = require("lokijs");
-const lfsa = require('lokijs/src/loki-fs-structured-adapter.js');
+//const lfsa = require('lokijs/src/loki-fs-structured-adapter.js');
+const lfsa = require('./adapter');
+
 
 var db;
 
