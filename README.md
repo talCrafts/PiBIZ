@@ -17,8 +17,9 @@ Quickstart
     ```bash
     APP_HOST=127.0.0.1
     APP_PORT=1760
-    AUTH_SECRET=abcd1234abcd1234abcd
-    ADMIN_API_KEY=abcd-1234abcd-1234abcd
+    AUTH_SECRET=x32
+    ADMIN_API_KEY=x24
+    DB_ENC_KEY=x32
     ```
 
 1. In a terminal, run:
@@ -38,20 +39,44 @@ API Key
 - You can revoke existing or create new apikey anytime you want.
 - Each apikey has a scope rule ( Unless Master Mode is  `ON` )  which specify which API Collections the apikey is valid for. 
 - Apikey with Master Mode `ON` has full API access.
-- For admin endpoints use `ADMIN_API_KEY` fetched from `.env` config
+- For admin accounts use `ADMIN_API_KEY` fetched from `.env` config
 
 - The apikey can be passed to the PiBIZ API in two ways
-    - In a query parameter.   
+    - In a query parameter as `apikey`.   
         ```js
-        fetch('/api/asset/h435gr/?apikey=xxkeyxx')
+        fetch('/api/asset/h435gr/?apikey=KEY')
         ```
 
     - As an `apikey` header.
         ```js
         fetch('/api/asset/h435gr', {
-            headers: { 'apikey': 'xxkeyxx' }
+            headers: { 'apikey': 'KEY' }
         })
         ```
+
+#
+
+AUTH Token
+----------
+
+- Authorized api endpoints requires JWT AuthToken. 
+- AuthToken for Admin Group has full access.
+- For Signing JWT Tokens use `AUTH_SECRET` fetched from `.env` config
+
+- The AuthToken can be passed to the PiBIZ API in two ways
+    - In a query parameter as `authtoken`.   
+        ```js
+        fetch('/api/asset/h435gr/?apikey=KEY&authtoken=TOKEN')
+        ```
+
+    - As an `Authorization` Bearer header.
+        ```js
+        fetch('/api/exec/{collection}/{action}', {
+            method: 'post',       
+            body: JSON.stringify({...}),
+            headers: { 'Authorization': 'Bearer ' + TOKEN }
+        })   
+        ```        
     
 
 #
@@ -103,91 +128,43 @@ API Endpoints
     })   
     ```
 
+
+    ```js
+    fetch('/api/exec/pibiz/getFieldTypes', {
+        method: 'post'        
+    })   
+    ```
+
+    ```js
+    fetch('/api/exec/pibiz/getFields', {
+        method: 'post',
+        body: JSON.stringify({           
+            identity: 'collection'           
+        })    
+    })   
+    ```
+
+    ```js
+    fetch('/api/exec/pibiz/getAccessGroups', {
+        method: 'post'        
+    })   
+    ```
+
+    ```js
+    fetch('/api/exec/pibiz/getFormView', {
+        method: 'post',
+        body: JSON.stringify({           
+            identity: 'collection',
+            _id:'optional _id'           
+        })    
+    })   
+    ```
+
+
 - `GET Asset` ::  Get Asset File   
         
     ```js
     fetch('/api/asset/{assetId}', {
-        method: 'GET'             
-    })   
-    ```
-
-
-#
-    
-ADMIN API Endpoints
-----------
-
-- `Admin Login` ::  Authenticate & Returns Auth Token   
-        
-    ```js
-    fetch('/api/admin/login', {
-        method: 'post',       
-        body: JSON.stringify({
-            username: 'admin_username',
-            password: 'admin_password'
-        })
-    })   
-    ```
-
-- `Admin Exec` :: Executes various admin actions & Returns result 
-        
-     ```js
-    fetch('/api/admin/exec/{action}', {
-        method: 'post',       
-        body: JSON.stringify({...})
-    })   
-    ```
-
-    ```js
-    fetch('/api/admin/exec/getFields', {
-        method: 'post',       
-        body: JSON.stringify({
-            identity: 'collectionName'
-        })
-    })   
-    ```
-
-    ```js
-    fetch('/api/admin/exec/getAccessGroups', {
-        method: 'post'    
-    })   
-    ```
-     
-    ```js
-    fetch('/api/admin/exec/getAccountGroups', {
-        method: 'post'    
-    })   
-    ```
-
-    ```js
-    fetch('/api/admin/exec/findEntries', {
-        method: 'post',
-        body: JSON.stringify({
-            identity: 'collectionName',
-            query: { status: 'on' },
-            limit: 50,
-            offset: 0,
-            pick: [ 'field1', 'field6' ]
-        })    
-    })   
-    ```
-
-
-    ```js
-    fetch('/api/admin/exec/findEntry', {
-        method: 'post',
-        body: JSON.stringify({
-            identity: 'collectionName',
-            query: { _id: 'uid1' },           
-            omit: [ 'field3' ]
-        })    
-    })   
-    ```
-
-- `Admin Asset` ::  Get Asset File   
-        
-    ```js
-    fetch('/api/admin/asset/{assetId}', {
         method: 'GET'             
     })   
     ```
