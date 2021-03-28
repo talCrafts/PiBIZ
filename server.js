@@ -54,13 +54,11 @@ let scServer = socketClusterServer.attach(httpServer, scOptions);
         BackupHelper.DbTask.start();
         BackupHelper.UploadsTask.start();
     });
+})();
 
-
-    //__________________________________________ LISTEN ERRORS
-    (async () => {
-        for await (let { error } of scServer.listener('error')) {
-            console.log(error.name, error.message);
-        }
-    })();
-
+//__________________________________________ LISTEN ERRORS
+(async () => {
+    for await (let { error } of scServer.listener('error')) {
+        console.log(error.name, error.message);
+    }
 })();
