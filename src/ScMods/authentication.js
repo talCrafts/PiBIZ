@@ -4,50 +4,41 @@ const ADMIN_API_KEY = process.env.ADMIN_API_KEY;
 
 
 module.exports.attach = (socket) => {
+  const DataStore = require('../DataStores/DataStore');
+  const HttpHelper = require('../Utils/httpHelper');
+  const { GetLogin } = require('../Utils/apiHelper');
 
-  const Helper = require('../Utils/helper');
-  const PibizHelper = require('../Utils/pibizHelper');
 
+  const validateLoginDetails = async (request) => {
+    try {
+      let apiKey = HttpHelper.GetApiKey(socket.request);
+      if (!apiKey) {
+        throw new Error("Unauthorized API Access");
+      }
 
-  let validateLoginDetails = async (request) => {
-    let apiKey = Helper.GetApiKey(socket.request);
-
-    let { username, password } = request.data;
-
-    let Qry = { username, status: 'on' };
-    if (apiKey === ADMIN_API_KEY) {
-      Qry.group = 'admin';
-    } else {
-      const hasKey = PibizHelper.GetCollection('apikeys').findOne({ key: apiKey });
-      if (hasKey && hasKey._id) {
-        Qry.group = { '$ne': 'admin' }
+      let hasKey;
+      if (apiKey === ADMIN_API_KEY) {
+        hasKey = { _id: 'admin', ismaster: 'on', key: apiKey };
       } else {
-        let Err = new Error(`No  Access Token Key`);
-        Err.name = 'ApiKeyError';
-        await Helper.DelayRes();
-        return request.error(Err);
+        hasKey = DataStore.getCollection('apikeys').findOne({ key: apiKey });
       }
-    }
-
-    const Accounts = PibizHelper.GetCollection("accounts");
-    const User = Accounts.findOne(Qry);
-    if (User && User._id) {
-      const isPwdOk = await Helper.CheckPassword(password, User.password);
-      if (isPwdOk) {
-        socket.setAuthToken({ uid: User._id, group: User.group }, { expiresIn: "12h" });
-        return request.end();
+      if (!hasKey || !hasKey._id) {
+        throw new Error('No  Access Token Key');
       }
-    }
 
-    let loginError = new Error('Invalid username or password');
-    loginError.name = 'LoginError';
-    await Helper.DelayRes();
-    return request.error(loginError);
+      // let { username, password } = request.data;     
+      const User = await GetLogin({ params: request.data, hasKey });
+      socket.setAuthToken({ uid: User._id, group: User.group }, { expiresIn: "12h" });
+      return request.end();
+    } catch (error) {
+      await HttpHelper.DelayRes();
+      request.error(error);
+    }
   };
 
   (async () => {
     for await (request of socket.procedure('login')) {
-      validateLoginDetails(request);
+      await validateLoginDetails(request);
     }
   })();
 };

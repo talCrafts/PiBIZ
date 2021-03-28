@@ -41,7 +41,7 @@ API Key
 - Apikey with Master Mode `ON` has full API access.
 - For admin accounts use `ADMIN_API_KEY` fetched from `.env` config
 
-- The apikey can be passed to the PiBIZ API in two ways
+- Apikey can be passed to the PiBIZ API in two ways
     - In a query parameter as `apikey`.   
         ```js
         fetch('/api/asset/h435gr/?apikey=KEY')
@@ -63,7 +63,7 @@ AUTH Token
 - AuthToken for Admin Group has full access.
 - For Signing JWT Tokens use `AUTH_SECRET` fetched from `.env` config
 
-- The AuthToken can be passed to the PiBIZ API in two ways
+- AuthToken can be passed to the PiBIZ API in two ways
     - In a query parameter as `authtoken`.   
         ```js
         fetch('/api/asset/h435gr/?apikey=KEY&authtoken=TOKEN')

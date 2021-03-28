@@ -3,19 +3,19 @@ const fs = require('fs');
 const readline = require('readline');
 const stream = require('stream');
 
-const Helper = require('../Utils/helper');
+const CryptoHelper = require('../../Utils/cryptoHelper');
 
-class LokiFsStructuredAdapter {
+class LokiFsStructuredCipherAdapter {
     constructor() {
         this.mode = "reference";
         this.dbref = null;
         this.dirtyPartitions = [];
-        this.cKey = Helper.GetCKey();
+        this.cKey = CryptoHelper.GetCKey();
         this.sodium = null;
     }
 
     encrypt = async (message) => {
-        if (!this.sodium) this.sodium = await Helper.GetSodium();
+        if (!this.sodium) this.sodium = await CryptoHelper.GetSodium();
 
         let nonce = await this.sodium.randombytes_buf(24);
         let ciphertext = await this.sodium.crypto_secretbox(message, nonce, this.cKey);
@@ -26,7 +26,7 @@ class LokiFsStructuredAdapter {
     }
 
     decrypt = async (ciphertext) => {
-        if (!this.sodium) this.sodium = await Helper.GetSodium();
+        if (!this.sodium) this.sodium = await CryptoHelper.GetSodium();
 
         let textParts = ciphertext.split(':');
         let nonce = await this.sodium.sodium_hex2bin(textParts.shift());
@@ -83,7 +83,7 @@ class LokiFsStructuredAdapter {
      *
      * @param { string } dbname - the name of the database to retrieve.
      * @param { function} callback - callback should accept string param containing db object reference.
-     * @memberof LokiFsStructuredAdapter
+     * @memberof LokiFsStructuredCipherAdapter
     */
 
     loadDatabase = (dbname, callback) => {
@@ -150,7 +150,7 @@ class LokiFsStructuredAdapter {
     * @param {string} dbname - the name to give the serialized database within the catalog.
     * @param {int} collectionIndex - the ordinal position of the collection to load.
     * @param {function} callback - callback to pass to next invocation or to call when done
-    * @memberof LokiFsStructuredAdapter
+    * @memberof LokiFsStructuredCipherAdapter
     */
     loadNextCollection = (dbname, collectionIndex, callback) => {
         let instream = fs.createReadStream(dbname + "." + collectionIndex);
@@ -193,7 +193,7 @@ class LokiFsStructuredAdapter {
     /**
      * Generator for yielding sequence of dirty partition indices to iterate.
      *
-     * @memberof LokiFsStructuredAdapter
+     * @memberof LokiFsStructuredCipherAdapter
      */
     *getPartition() {
         let idx;
@@ -216,7 +216,7 @@ class LokiFsStructuredAdapter {
      * @param {string} dbname - the name to give the serialized database within the catalog.
      * @param {object} dbref - the loki database object reference to save.
      * @param {function} callback - callback passed obj.success with true or false
-     * @memberof LokiFsStructuredAdapter
+     * @memberof LokiFsStructuredCipherAdapter
      */
     exportDatabase = (dbname, dbref, callback) => {
         let idx;
@@ -284,4 +284,4 @@ class LokiFsStructuredAdapter {
 
 }
 
-module.exports = LokiFsStructuredAdapter;
+module.exports = LokiFsStructuredCipherAdapter;

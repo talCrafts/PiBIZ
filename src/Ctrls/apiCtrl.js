@@ -1,14 +1,7 @@
-const DB = require("../Libs/db");
-const ApiKrud = require('../Libs/ApiKrud');
+const DataStore = require('../DataStores/DataStore');
 
-const Helper = require('../Utils/helper');
-
-const jModelAccess = require("../JModels/access");
-const jModelAccounts = require("../JModels/accounts");
-const jModelAssets = require("../JModels/assets");
-const jModelCollections = require("../JModels/collections");
-const jModelApikeys = require("../JModels/apikeys");
-const jModelGroups = require("../JModels/groups");
+const CryptoHelper = require('../Utils/cryptoHelper');
+const CrudHelper = require('../Utils/crudHelper');
 
 
 
@@ -16,15 +9,23 @@ const jModelGroups = require("../JModels/groups");
 Migrate();
 
 async function Migrate() {
-    let Collections = DB.getCollection('collections');
+    let Collections = DataStore.getCollection('collections');
     if (Collections) {
-        DB.setCollections();
+        DataStore.setCollections();
     } else {
+        const jModelAccess = require("../JModels/access");
+        const jModelAccounts = require("../JModels/accounts");
+        const jModelAssets = require("../JModels/assets");
+        const jModelCollections = require("../JModels/collections");
+        const jModelApikeys = require("../JModels/apikeys");
+        const jModelGroups = require("../JModels/groups");
+
+
         //Step-1
-        DB.setCollection(jModelCollections, true);
+        DataStore.setCollection(jModelCollections, true);
 
         //Step-2
-        Collections = DB.getCollection('collections');
+        Collections = DataStore.getCollection('collections');
         Collections.insert(jModelCollections);
         Collections.insert(jModelAccess);
         Collections.insert(jModelAccounts);
@@ -33,18 +34,17 @@ async function Migrate() {
         Collections.insert(jModelGroups);
 
         //Step-3
-        DB.setCollections();
+        DataStore.setCollections();
 
         //______________----____________________________ Admin Account Setup
-        let Accounts = DB.getCollection('accounts');
-
+        let Accounts = DataStore.getCollection('accounts');
         const isAdmin = Accounts.findOne({ username: 'admin' });
         console.log("isAdminExists", !!isAdmin);
 
         if (!isAdmin) {
             const item = {
                 username: 'admin',
-                password: await Helper.HashPassword('s152207'),
+                password: await CryptoHelper.HashPassword('s152207'),
                 group: 'admin',
                 displayName: 'The Owner2',
                 params: {},
@@ -58,12 +58,12 @@ async function Migrate() {
 }
 
 
-exports.Exec = async ({ ctrl, action, params = {}, fireUser }) => {
-    let Func = ApiKrud[`${action}`];
+exports.Exec = async ({ ctrl, action, params = {}, isAccess, fireUser }) => {
+    let Func = CrudHelper[`${action}`];
     if (Func) {
-        const result = await Func(ctrl, params, fireUser);
+        const result = await Func(ctrl, params, isAccess, fireUser);
         return result;
     }
 
-    return Helper.ThrowErr('No Access L1');
+    throw new Error('No Access L1');
 };

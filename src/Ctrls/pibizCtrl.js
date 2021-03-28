@@ -1,44 +1,49 @@
-const PibizHelper = require('../Utils/pibizHelper');
-
-
-//______________________________________  Get Fields By Identity
-exports.getFields = async ({ identity }, fireUser) => {
-    return PibizHelper.getFields(identity);
-};
-
+const DataStore = require('../DataStores/DataStore');
 
 //______________________________________  Get Access Groups
 exports.getAccessGroups = async () => {
-    return PibizHelper.getAccessGroups();
+    const grps = DataStore.getCollection('groups').find().map(function (obj) {
+        return obj.name;
+    });
+
+    grps.splice(0, 0, 'public');
+    return grps;
 };
 
 //______________________________________  Get Account Groups
 exports.getAccountGroups = async () => {
-    return PibizHelper.getAccountGroups();
+    const grps = DataStore.getCollection('groups').find().map(function (obj) {
+        return obj.name;
+    });
+
+    grps.splice(0, 0, 'admin');
+    return grps;
 };
 
 //______________________________________  Get Exec Actions
 exports.getActions = async () => {
-    return PibizHelper.getActions();
+    return ['find', 'findOne', 'create', 'update', 'remove', 'count'];
 };
 
 //______________________________________  Get Access Actions
 exports.getAccessActions = async () => {
-    return PibizHelper.getAccessActions();
+    return ['deny', 'own', 'group', 'allow'];
 };
 
 //______________________________________  Get FieldTypes
 exports.getFieldTypes = async () => {
-    return PibizHelper.getFieldTypes();
+    return [
+        'array', 'boolean', 'radio', 'collection', 'select', 'date',
+        'file', 'object', 'text', 'password', 'textarea', 'time'
+    ];
 };
 
 
 //______________________________________  Get ListView
-exports.getListView = async ({ identity }, fireUser) => {
+exports.getListView = async ({ identity }, isAccess, fireUser) => {
     let columns = ['_id'];
-    let Flds = PibizHelper.getFields(identity);
-
-    (Flds || []).forEach(field => {
+    let Collection = DataStore.getCollection("collections").findOne({ identity });
+    (Collection.fields || []).forEach(field => {
         if (field.unique === true || field.indexed === true) {
             columns.push(field.name);
         }
@@ -49,13 +54,81 @@ exports.getListView = async ({ identity }, fireUser) => {
 
 
 //______________________________________  Get FormView create/udate
-exports.getFormView = async ({ identity, _id }, fireUser) => {
-    let Flds = PibizHelper.getFields(identity);
+exports.getFormView = async ({ identity, _id }, isAccess, fireUser) => {
+    let Collection = DataStore.getCollection("collections").findOne({ identity });
     const formFields = [];
 
-    (Flds || []).forEach(field => {
-        formFields.push(PibizHelper.parseFieldType(field, !_id));
+    (Collection.fields || []).forEach(field => {
+        formFields.push(parseFieldType(field, !_id));
     });
 
     return formFields;
+};
+
+
+//______________________________________  Parse FieldType
+function parseFieldType(field, validation = false) {
+    let attribs = { name: field.name, type: 'text' };
+    if (validation) {
+        if (field.rule && field.rule.includes("required")) {
+            attribs['required'] = true;
+        }
+    }
+
+    if (field.label) {
+        attribs['label'] = field.label;
+    }
+
+    /*if (field.defaultValue || field.defaultValue === 0 || field.defaultValue === false) {
+        attribs['defaultValue'] = field.defaultValue;
+    }*/
+
+    if (field.fieldType == 'textarea') {
+        attribs['type'] = 'textarea';
+    } else if (field.fieldType == 'password') {
+        attribs['type'] = 'password';
+    } else if (field.fieldType == 'file') {
+        attribs['type'] = 'file';
+    } else if (field.fieldType == 'date') {
+        attribs['type'] = 'date';
+    } else if (field.fieldType == 'array') {
+        if (field.options) {
+            attribs['options'] = field.options;
+        }
+    } else if (field.fieldType == 'checkbox') {
+        attribs['type'] = 'checkbox';
+        if (field.options) {
+            attribs['options'] = field.options;
+        }
+    } else if (field.fieldType == 'collection') {
+        attribs['type'] = 'select';
+        if (field.multiple === true) {
+            attribs['multiple'] = true;
+        }
+
+
+        let qry = {};
+        if (field.query) {
+            //qry = JSON.parse(JSON.stringify(field.query));
+            qry = field.query;
+        }
+        attribs['options'] = DataStore.getCollection(field.identity).find(qry)
+            .map(function (obj) {
+                return { label: obj[field.displayField], value: obj._id }
+            });
+    } else if (field.fieldType == 'select') {
+        attribs['type'] = 'select';
+        if (field.multiple === true) {
+            attribs['multiple'] = true;
+        }
+        if (field.options) {
+            attribs['options'] = field.options;
+        }
+    } else if (field.fieldType == 'boolean' || field.fieldType == 'radio') {
+        attribs['type'] = 'radio';
+        if (field.options) {
+            attribs['options'] = field.options;
+        }
+    }
+    return attribs;
 };
