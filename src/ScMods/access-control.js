@@ -59,7 +59,7 @@ module.exports.attach = function (scServer) {
                         hasKey = true;
                     } else {
                         const res = DataStore.getCollection('apikeys').findOne({ key: apiKey });
-                        if (res && res_id) {
+                        if (res && res._id) {
                             hasKey = true;
                         }
                     }
