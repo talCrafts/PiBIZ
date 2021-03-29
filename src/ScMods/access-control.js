@@ -1,4 +1,12 @@
+/*
+______________________________________  ENV */
+const ADMIN_API_KEY = process.env.ADMIN_API_KEY;
+
+
 module.exports.attach = function (scServer) {
+
+    const DataStore = require('../DataStores/DataStore');
+    const HttpHelper = require('../Utils/httpHelper');
 
     scServer.setMiddleware(scServer.MIDDLEWARE_INBOUND, async (middlewareStream) => {
         for await (let action of middlewareStream) {
@@ -33,6 +41,41 @@ module.exports.attach = function (scServer) {
                 }
             }
             //HaramKhor
+            action.allow();
+        }
+    });
+
+    scServer.setMiddleware(scServer.MIDDLEWARE_HANDSHAKE, async (middlewareStream) => {
+        for await (let action of middlewareStream) {
+            if (action.type === action.HANDSHAKE_WS) {
+                try {
+                    const apiKey = HttpHelper.GetApiKey(action.request);
+                    if (!apiKey) {
+                        throw new Error("Unauthorized API Access");
+                    }
+
+                    let hasKey;
+                    if (apiKey === ADMIN_API_KEY) {
+                        hasKey = true;
+                    } else {
+                        const res = DataStore.getCollection('apikeys').findOne({ key: apiKey });
+                        if (res && res_id) {
+                            hasKey = true;
+                        }
+                    }
+
+                    if (hasKey !== true) {
+                        throw new Error('No  Access Token Key');
+                    }
+
+                    action.allow();
+                    continue;
+                } catch (error) {
+                    action.block(error);
+                    continue;
+                }
+            }
+
             action.allow();
         }
     });

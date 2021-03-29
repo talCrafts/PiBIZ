@@ -7,14 +7,15 @@ const socketClusterServer = require('socketcluster-server');
 const { initDb } = require("./src/DataStores/DataStore");
 
 
-// SC Options
+const AUTH_SECRET = process.env.AUTH_SECRET;
+
+
 let scOptions = {
     path: "/pibiz/",
-    authKey: process.env.AUTH_SECRET,
+    authKey: AUTH_SECRET,
     origins: "*:*"
 };
 
-//Create Servers (HTTP/WS)
 let httpServer = eetase(http.createServer());
 let scServer = socketClusterServer.attach(httpServer, scOptions);
 
@@ -30,33 +31,28 @@ let scServer = socketClusterServer.attach(httpServer, scOptions);
     const BackupHelper = require("./src/Utils/backupHelper");
 
 
-    //Attach HTTP App
     HttpApp.attach(scServer);
-
-    //Attach ACL
     AccessControl.attach(scServer);
+    Api.attach(scServer);
 
-    // WebSocket connection handling loop.
     (async () => {
         for await (let { socket } of scServer.listener('connection')) {
-            //Attach Auth
             Authentication.attach(socket);
         }
     })();
 
-    //Attach API
-    Api.attach(scServer);
-
-    //Start SERVER
     httpServer.listen(process.env.APP_PORT, process.env.APP_HOST, () => {
         console.log(`Listening on http://${process.env.APP_HOST}:${process.env.APP_PORT}`);
 
-        BackupHelper.DbTask.start();
-        BackupHelper.UploadsTask.start();
+        (async () => {
+            BackupHelper.DbTask.start();
+        })();
+        (async () => {
+            BackupHelper.UploadsTask.start();
+        })();
     });
 })();
 
-//__________________________________________ LISTEN ERRORS
 (async () => {
     for await (let { error } of scServer.listener('error')) {
         console.log(error.name, error.message);

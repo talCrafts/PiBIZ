@@ -2,8 +2,7 @@ const url = require('url');
 const path = require('path');
 const fs = require('fs');
 
-/*
-______________________________________  ENV */
+
 const ADMIN_API_KEY = process.env.ADMIN_API_KEY;
 
 
@@ -15,7 +14,6 @@ module.exports.attach = (scServer) => {
 
     let httpServer = scServer.httpServer;
 
-    // HTTP request handling loop.
     (async () => {
         for await (let requestData of httpServer.listener('request')) {
             await App.apply(null, requestData);
@@ -64,7 +62,7 @@ module.exports.attach = (scServer) => {
                 if (req.method === 'POST') {
                     params = await HttpHelper.GetParams(req, res, fireUser);
                 }
-                //->  /[login|exec|asset]
+
                 const endPoint2 = pSplits[2];
                 if (endPoint2 === 'login' && req.method === 'POST') {
                     const User = await ApiHelper.GetLogin({ params, hasKey });
