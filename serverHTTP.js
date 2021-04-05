@@ -15,8 +15,8 @@ module.exports.attach = (scServer) => {
     let httpServer = scServer.httpServer;
 
     (async () => {
-        for await (let requestData of httpServer.listener('request')) {
-            await App.apply(null, requestData);
+        for await (let [req, res] of httpServer.listener('request')) {
+            App(req, res);
         }
     })();
 
@@ -93,8 +93,12 @@ module.exports.attach = (scServer) => {
                     const filePath = path.join(__dirname, `./_STORAGE/UPLOADS/${result.path}`);
                     const readStream = fs.createReadStream(filePath);
                     return readStream.pipe(res);
+                } else {
+                    await HttpHelper.DelayRes();
+                    throw new Error('Invalid  OPAccess A3');
                 }
             } catch (error) {
+                await HttpHelper.DelayRes();
                 return HttpHelper.SendErr(res, 401, error.message);
             }
         } else {

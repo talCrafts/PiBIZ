@@ -10,12 +10,14 @@ const GetUid = () => nanoid();
 const DelayRes = (ms = 500) => new Promise(resolve => setTimeout(resolve, ms));
 
 const SendErr = (res, status = 500, message = 'Unexpected server error1') => {
-    res.writeHead(status, { 'X-Powered-By': 'PiBIZ' });
-    return res.end(`${message}`);
+    res.setHeader('X-Powered-By', 'PiBIZ');
+    res.writeHead(status, { 'Content-Type': 'application/json' });
+    return res.end(JSON.stringify({ status, message }))
 }
 
 const SendRes = (res, result, status = 200) => {
-    res.writeHead(status, { 'Content-Type': 'application/json', 'X-Powered-By': 'PiBIZ' });
+    res.setHeader('X-Powered-By', 'PiBIZ');
+    res.writeHead(status, { 'Content-Type': 'application/json' });
     return res.end(JSON.stringify({ result }))
 }
 
