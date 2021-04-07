@@ -144,7 +144,7 @@ const create = async (identity, { item }, isAccess, fireUser) => {
         proms.push(
             new Promise(async (resolve, reject) => {
                 if (field in newDoc && newDoc[field]) {
-                    newDoc[field] = await CryptoHelper.HashPassword(newDoc[field]);
+                    newDoc[field] = CryptoHelper.HashPassword(newDoc[field]);
                 }
                 resolve();
             })
@@ -246,7 +246,7 @@ const update = async (identity, { query = {}, item }, isAccess, fireUser) => {
             proms.push(
                 new Promise(async (resolve, reject) => {
                     if (field in updDoc && updDoc[field]) {
-                        updDoc[field] = await CryptoHelper.HashPassword(updDoc[field]);
+                        updDoc[field] = CryptoHelper.HashPassword(updDoc[field]);
                     }
                     resolve();
                 })

@@ -1,7 +1,7 @@
 const url = require('url');
 const formidable = require('formidable');
 const path = require('path');
-const fse = require('fs-extra')
+const fs = require('fs')
 const { nanoid } = require('nanoid/non-secure');
 
 const DataStore = require('../DataStores/DataStore');
@@ -113,7 +113,7 @@ const GetParams = (req, res, fireUser = {}) => {
                         }
                         if (!fldr) {
                             try {
-                                await fse.remove(sampleFile.path);
+                                await fs.unlink(sampleFile.path);
                             } catch (err) { }
 
                             return SendErr(res, 400, `Invalid File type - ${sampleFile.type}`);

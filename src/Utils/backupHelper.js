@@ -1,43 +1,49 @@
 const path = require('path');
 const cron = require('node-cron');
-const fse = require('fs-extra')
+const Rsync = require('rsync');
 
+//const srcDir = path.join(__dirname, `../../_STORAGE/`);
+//const DbDir = path.join(__dirname, `../../_STORAGE/DB/`);
+//const UploadDir = path.join(__dirname, `../../_STORAGE/UPLOADS/`);
 
-const DbDir = path.join(__dirname, `../../_STORAGE/DB/`);
-const UploadDir = path.join(__dirname, `../../_STORAGE/UPLOADS/`);
-
-
-//__________________________________________ CRON SCHEDULE - BKP DB
-exports.DbTask = cron.schedule(
-    '*/5 * * * *',
-    async () => {
-        const noww = new Date();
-        const BkpPath = `/mnt/pibizdisk/DB/Y${noww.getFullYear()}/M${noww.getMonth() + 1}/D${noww.getDate()}`;
-
+function runRsync(rsyncSource, rsyncDest) {
+    const rsync = new Rsync();
+    rsync.flags('avW');
+    rsync.set('delete');
+    rsync.exclude('.keep');
+    rsync.source(rsyncSource);
+    rsync.destination(rsyncDest);
+    return new Promise((resolve, reject) => {
         try {
-            await fse.copy(DbDir, BkpPath)
-            console.log('DB BKP success!', BkpPath)
-        } catch (err) {
-            console.log('DB BKP Failed!')
-            console.error(err)
+            let logData = "";
+            rsync.execute(
+                (error, code, cmd) => {
+                    resolve({ error, code, cmd, data: logData });
+                },
+                (data) => {
+                    logData += data;
+                },
+                (err) => {
+                    logData = "" + err;
+                }
+            );
+        } catch (error) {
+            reject(error);
         }
-    },
-    { scheduled: false, timezone: "Asia/Kolkata" }
-);
-
-
+    });
+}
 //__________________________________________ CRON SCHEDULE - BKP UPLOADS
-exports.UploadsTask = cron.schedule(
-    '*/15 * * * *',
+exports.BkpTask = cron.schedule(
+    '*/1 * * * *',
     async () => {
-        const BkpPath = `/mnt/pibizdisk/UPLOADS/`;
+        const srcDir = path.join(__dirname, `../../_STORAGE/`);
+        const BkpPath = `/mnt/pibizdisk/`;
 
         try {
-            await fse.copy(UploadDir, BkpPath)
-            console.log('UPLOADS BKP success!', BkpPath)
+            const out = await runRsync(srcDir, BkpPath);
+            console.log('BKP success!', out);
         } catch (err) {
-            console.log('UPLOADS BKP Failed!')
-            console.error(err)
+            console.log('BKP Failed!', err);
         }
     },
     { scheduled: false, timezone: "Asia/Kolkata" }

@@ -44,7 +44,7 @@ async function Migrate() {
         if (!isAdmin) {
             const item = {
                 username: 'admin',
-                password: await CryptoHelper.HashPassword('s152207'),
+                password: CryptoHelper.HashPassword('s152207'),
                 group: 'admin',
                 displayName: 'The Owner2',
                 params: {},

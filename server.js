@@ -8,6 +8,7 @@ const { initDb } = require("./src/DataStores/DataStore");
 
 
 const AUTH_SECRET = process.env.AUTH_SECRET;
+const DB_BACKUP = process.env.DB_BACKUP || 'off';
 
 
 let scOptions = {
@@ -43,13 +44,9 @@ let scServer = socketClusterServer.attach(httpServer, scOptions);
 
     httpServer.listen(process.env.APP_PORT, process.env.APP_HOST, () => {
         console.log(`Listening on http://${process.env.APP_HOST}:${process.env.APP_PORT}`);
-
-        (async () => {
-            BackupHelper.DbTask.start();
-        })();
-        (async () => {
-            BackupHelper.UploadsTask.start();
-        })();
+        if (DB_BACKUP == 'on') {
+            BackupHelper.BkpTask.start();
+        }
     });
 })();
 

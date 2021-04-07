@@ -16,7 +16,7 @@ async function GetLogin({ params, hasKey }) {
 
     const User = DataStore.getCollection("accounts").findOne(query);
     if (User && User._id) {
-        const isPwdOk = await CryptoHelper.CheckPassword(password, User.password);
+        const isPwdOk = CryptoHelper.CheckPassword(password, User.password);
         if (isPwdOk) {
             return User;
         }
