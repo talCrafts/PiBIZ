@@ -1,7 +1,7 @@
 const url = require('url');
 const path = require('path');
 const fs = require('fs');
-
+const AdmZip = require('adm-zip');
 
 const ADMIN_API_KEY = process.env.ADMIN_API_KEY;
 
@@ -85,13 +85,34 @@ module.exports.attach = (scServer) => {
                     }
 
                     const asset = pSplits[3];
-                    const result = await ApiCtrl.GetAsset(asset);
 
-                    res.setHeader('Content-Type', `${result.mime}`);
-                    res.setHeader('X-Powered-By', 'PiBIZ');
-                    const filePath = path.join(__dirname, `./_STORAGE/UPLOADS/${result.path}`);
-                    const readStream = fs.createReadStream(filePath);
-                    return readStream.pipe(res);
+                    if (asset === 'backup' && fireUser.group === 'admin') {
+                        const StorageDir = path.join(__dirname, `/_STORAGE/`);
+                        const bkpDir = fs.readdirSync(StorageDir + 'DB');
+
+                        const zip = new AdmZip();
+                        for (let i = 0; i < bkpDir.length; i++) {
+                            zip.addLocalFile(StorageDir + 'DB' + '/' + bkpDir[i]);
+                        }
+                        const data = zip.toBuffer();
+
+                        const noww = new Date();
+                        const downloadName = `Y${noww.getFullYear()}-M${noww.getMonth() + 1}-D${noww.getDate()}.zip`;
+
+                        res.setHeader(`Content-Type`, `application/octet-stream`);
+                        res.setHeader('X-Powered-By', 'PiBIZ');
+                        res.setHeader(`Content-Disposition`, `attachment; filename=${downloadName}`);
+                        res.setHeader(`Content-Length`, data.length);
+                        return res.end(data);
+                    } else {
+                        const result = await ApiCtrl.GetAsset(asset);
+
+                        res.setHeader('Content-Type', `${result.mime}`);
+                        res.setHeader('X-Powered-By', 'PiBIZ');
+                        const filePath = path.join(__dirname, `./_STORAGE/UPLOADS/${result.path}`);
+                        const readStream = fs.createReadStream(filePath);
+                        return readStream.pipe(res);
+                    }
                 } else {
                     await HttpHelper.DelayRes();
                     throw new Error('Invalid  OPAccess A3');
