@@ -6,7 +6,7 @@ const ADMIN_API_KEY = process.env.ADMIN_API_KEY;
 module.exports.attach = (socket) => {
   const DataStore = require('../DataStores/DataStore');
   const HttpHelper = require('../Utils/httpHelper');
-  const { GetLogin } = require('../Utils/apiHelper');
+  const { GetLogin } = require('../Ctrls/index');
 
 
   const validateLoginDetails = async (request) => {

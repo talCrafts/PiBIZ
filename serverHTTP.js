@@ -8,9 +8,8 @@ const ADMIN_API_KEY = process.env.ADMIN_API_KEY;
 
 module.exports.attach = (scServer) => {
     const DataStore = require('./src/DataStores/DataStore');
-
     const HttpHelper = require('./src/Utils/httpHelper');
-    const ApiHelper = require('./src/Utils/apiHelper');
+    const ApiCtrl = require('./src/Ctrls/index');
 
     let httpServer = scServer.httpServer;
 
@@ -65,7 +64,7 @@ module.exports.attach = (scServer) => {
 
                 const endPoint2 = pSplits[2];
                 if (endPoint2 === 'login' && req.method === 'POST') {
-                    const User = await ApiHelper.GetLogin({ params, hasKey });
+                    const User = await ApiCtrl.GetLogin({ params, hasKey });
                     const token = await scServer.auth.signToken(
                         { uid: User._id, group: User.group },
                         scServer.signatureKey,
@@ -76,7 +75,7 @@ module.exports.attach = (scServer) => {
                 } else if (endPoint2 === 'exec' && req.method === 'POST') {
                     const ctrl = pSplits[3];
                     const action = pSplits[4];
-                    const result = await ApiHelper.GetExec({ ctrl, action, params, fireUser, hasKey });
+                    const result = await ApiCtrl.GetExec({ ctrl, action, params, fireUser, hasKey });
                     return HttpHelper.SendRes(res, result);
 
                 } else if (endPoint2 === 'asset' && req.method === 'GET') {
@@ -86,7 +85,7 @@ module.exports.attach = (scServer) => {
                     }
 
                     const asset = pSplits[3];
-                    const result = await ApiHelper.GetAsset(asset);
+                    const result = await ApiCtrl.GetAsset(asset);
 
                     res.setHeader('Content-Type', `${result.mime}`);
                     res.setHeader('X-Powered-By', 'PiBIZ');

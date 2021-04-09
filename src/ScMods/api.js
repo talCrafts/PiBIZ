@@ -7,7 +7,7 @@ module.exports.attach = (scServer) => {
 
     const DataStore = require('../DataStores/DataStore');
     const HttpHelper = require('../Utils/httpHelper');
-    const { GetExec } = require('../Utils/apiHelper');
+    const { GetExec } = require('../Ctrls/index');
 
 
     const AttachSocket = async (socket) => {

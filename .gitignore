@@ -107,4 +107,4 @@ dist
 _STORAGE/DB/**
 _STORAGE/UPLOADS/**
 # but keep the folder
-!_STORAGE/**/.keep
+!_STORAGE/**/.gitkeep

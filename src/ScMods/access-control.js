@@ -47,7 +47,7 @@ module.exports.attach = function (scServer) {
 
     scServer.setMiddleware(scServer.MIDDLEWARE_HANDSHAKE, async (middlewareStream) => {
         for await (let action of middlewareStream) {
-            console.log("action ", action)
+            console.log("action ", action.type)
             if (action.type === action.HANDSHAKE_WS) {
                 try {
                     const apiKey = HttpHelper.GetApiKey(action.request);

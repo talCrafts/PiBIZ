@@ -3,6 +3,11 @@ const fs = require('fs');
 const readline = require('readline');
 const stream = require('stream');
 
+/*
+______________________________________  ENV */
+const DB_ENCRYPTION = process.env.DB_ENCRYPTION || 'off';
+
+
 const { Encrypt, Decrypt } = require('../../Utils/cryptoHelper');
 
 class LokiFsStructuredCipherAdapter {
@@ -138,7 +143,11 @@ class LokiFsStructuredCipherAdapter {
         rl.on('line', (line) => {
             if (line !== "") {
                 try {
-                    obj = JSON.parse(Decrypt(line));
+                    if (DB_ENCRYPTION == 'on') {
+                        obj = JSON.parse(Decrypt(line));
+                    } else {
+                        obj = JSON.parse(line);
+                    }
                 } catch (e) {
                     callback(e);
                 }
@@ -239,7 +248,7 @@ class LokiFsStructuredCipherAdapter {
 
 
         for (var outline of li) {
-            if (shudEnc) {
+            if (shudEnc && DB_ENCRYPTION == 'on') {
                 wstream.write(Encrypt(outline) + "\n");
             } else {
                 wstream.write(outline + "\n");

@@ -1,10 +1,11 @@
 const DataStore = require('../DataStores/DataStore');
+const DbHelper = require('./dbHelper');
 const CryptoHelper = require('./cryptoHelper');
 const _ = require("./lowDash");
 
 
 //__________________find
-const find = async (identity, params = {}, isAccess, fireUser) => {
+const find = (identity, params = {}, isAccess, fireUser) => {
     const { query = {}, limit = 500, offset = 0, sort = ['_id', false], pick = [], omit = [] } = params;
 
     let Qry;
@@ -33,9 +34,9 @@ const find = async (identity, params = {}, isAccess, fireUser) => {
             Qry = query;
         } else {
             if (isAccess.access == 'own') {
-                Qry = DataStore.getOwnQry(query, fireUser);
+                Qry = DbHelper.getOwnQry(query, fireUser);
             } else if (isAccess.access == 'group') {
-                Qry = DataStore.getGroupQry(query, fireUser);
+                Qry = DbHelper.getGroupQry(query, fireUser);
             }
         }
     }
@@ -47,7 +48,7 @@ const find = async (identity, params = {}, isAccess, fireUser) => {
             .simplesort(`${sort[0]}`, { desc: Boolean(sort[1]) })
             .offset(offset).limit(limit)
             .data({ removeMeta: true });
-        docs.forEach(doc => items.push(DataStore.transForm(doc, pick, omit)));
+        docs.forEach(doc => items.push(DbHelper.transForm(doc, pick, omit)));
         return items;
     }
 
@@ -56,9 +57,9 @@ const find = async (identity, params = {}, isAccess, fireUser) => {
 
 
 //__________________findOne
-const findOne = async (identity, params, isAccess, fireUser) => {
+const findOne = (identity, params, isAccess, fireUser) => {
     const { query = {}, pick = [], omit = [] } = params;
-    DataStore.checkQry(query, identity);
+    DbHelper.checkQry(query, identity);
 
     let Qry;
     if (isAccess === 'admin') {
@@ -87,9 +88,9 @@ const findOne = async (identity, params, isAccess, fireUser) => {
             Qry = query;
         } else {
             if (isAccess.access == 'own') {
-                Qry = DataStore.getOwnQry(query, fireUser);
+                Qry = DbHelper.getOwnQry(query, fireUser);
             } else if (isAccess.access == 'group') {
-                Qry = DataStore.getGroupQry(query, fireUser);
+                Qry = DbHelper.getGroupQry(query, fireUser);
             }
         }
     }
@@ -97,7 +98,7 @@ const findOne = async (identity, params, isAccess, fireUser) => {
     if (Qry) {
         const res = DataStore.getCollection(identity).chain().find(Qry).data({ removeMeta: true });;
         const doc = res[0];
-        return DataStore.transForm(doc, pick, omit);
+        return DbHelper.transForm(doc, pick, omit);
     }
 
     throw new Error(`findOne failed`);
@@ -105,7 +106,7 @@ const findOne = async (identity, params, isAccess, fireUser) => {
 
 
 //__________________create
-const create = async (identity, { item }, isAccess, fireUser) => {
+const create = (identity, { item }, isAccess, fireUser) => {
     if (isAccess !== 'admin') {
         if (isAccess.fields && isAccess.fields.length) {
             if (isAccess.mode == 'pick') {
@@ -116,7 +117,7 @@ const create = async (identity, { item }, isAccess, fireUser) => {
         }
     }
 
-    const jModel = DataStore.getCollection("collections").findOne({ identity });
+    const jModel = DataStore.getJModel(identity);
     const vFields = {};
     const pwds = [];
 
@@ -129,9 +130,9 @@ const create = async (identity, { item }, isAccess, fireUser) => {
         }
     });
 
-    let newDoc = DataStore.parseItem(item);
+    let newDoc = DbHelper.parseItem(item);
 
-    const isValid = DataStore.validate(newDoc, vFields);
+    const isValid = DbHelper.validate(newDoc, vFields);
     if (isValid !== true) {
         if (isValid.error) {
             throw new Error(`${isValid.error}`);
@@ -139,19 +140,11 @@ const create = async (identity, { item }, isAccess, fireUser) => {
         throw new Error(`Document not valid`);
     }
 
-    const proms = [];
     pwds.forEach(field => {
-        proms.push(
-            new Promise(async (resolve, reject) => {
-                if (field in newDoc && newDoc[field]) {
-                    newDoc[field] = CryptoHelper.HashPassword(newDoc[field]);
-                }
-                resolve();
-            })
-        )
+        if (field in newDoc && newDoc[field]) {
+            newDoc[field] = CryptoHelper.HashPassword(newDoc[field]);
+        }
     });
-    await Promise.all(proms);
-
 
     if (jModel.stamped) {
         newDoc.createdAt = Date.now();
@@ -161,9 +154,7 @@ const create = async (identity, { item }, isAccess, fireUser) => {
     newDoc.createdBy = fireUser ? fireUser.uid : -1;
     newDoc.updatedBy = fireUser ? fireUser.uid : -1;
 
-    if (identity === "collections") {
-        newDoc.kind = "more";
-    }
+
 
 
     const res = DataStore.getCollection(identity).insert(newDoc);
@@ -175,11 +166,6 @@ const create = async (identity, { item }, isAccess, fireUser) => {
             });
         }
 
-        if (identity === "collections") {
-            const jM = DataStore.getCollection(identity).findOne({ $loki: res.$loki });
-            DataStore.setCollection(jM, true);
-        }
-
         return res.$loki;
     }
 
@@ -189,8 +175,8 @@ const create = async (identity, { item }, isAccess, fireUser) => {
 
 
 //__________________update
-const update = async (identity, { query = {}, item }, isAccess, fireUser) => {
-    DataStore.checkQry(query, identity);
+const update = (identity, { query = {}, item }, isAccess, fireUser) => {
+    DbHelper.checkQry(query, identity);
 
     let Qry;
     if (isAccess === 'admin') {
@@ -208,15 +194,15 @@ const update = async (identity, { query = {}, item }, isAccess, fireUser) => {
             Qry = query;
         } else {
             if (isAccess.access == 'own') {
-                Qry = DataStore.getOwnQry(query, fireUser);
+                Qry = DbHelper.getOwnQry(query, fireUser);
             } else if (isAccess.access == 'group') {
-                Qry = DataStore.getGroupQry(query, fireUser);
+                Qry = DbHelper.getGroupQry(query, fireUser);
             }
         }
     }
 
     if (Qry) {
-        const jModel = DataStore.getCollection("collections").findOne({ identity });
+        const jModel = DataStore.getJModel(identity);
         const vFields = {};
         const pwds = [];
 
@@ -229,11 +215,11 @@ const update = async (identity, { query = {}, item }, isAccess, fireUser) => {
             }
         });
 
-        let updDoc = DataStore.parseItem(item);
+        let updDoc = DbHelper.parseItem(item);
 
         for (const [field, value] of Object.entries(updDoc)) {
             if (vFields[field]) {
-                const isValid = DataStore.validate({ [`${field}`]: value }, { [`${field}`]: vFields[field] });
+                const isValid = DbHelper.validate({ [`${field}`]: value }, { [`${field}`]: vFields[field] });
                 if (isValid !== true) {
                     throw new Error(`Invalid update data - ${field}`);
                 }
@@ -241,18 +227,11 @@ const update = async (identity, { query = {}, item }, isAccess, fireUser) => {
         }
 
 
-        const proms = [];
         pwds.forEach(field => {
-            proms.push(
-                new Promise(async (resolve, reject) => {
-                    if (field in updDoc && updDoc[field]) {
-                        updDoc[field] = CryptoHelper.HashPassword(updDoc[field]);
-                    }
-                    resolve();
-                })
-            )
+            if (field in updDoc && updDoc[field]) {
+                updDoc[field] = CryptoHelper.HashPassword(updDoc[field]);
+            }
         });
-        await Promise.all(proms);
 
 
         if (jModel.stamped) {
@@ -261,9 +240,6 @@ const update = async (identity, { query = {}, item }, isAccess, fireUser) => {
 
         updDoc.updatedBy = fireUser ? fireUser.uid : -1;
 
-        if (identity === "collections") {
-            updDoc.kind = "more";
-        }
 
         DataStore.getCollection(identity).chain().find(Qry)
             .update((doc) => {
@@ -273,11 +249,6 @@ const update = async (identity, { query = {}, item }, isAccess, fireUser) => {
                     }
                 }
             });
-
-        if (identity === "collections") {
-            const jM = DataStore.getCollection(identity).findOne(Qry);
-            DataStore.setCollection(jM, true);
-        }
         return true;
     }
 
@@ -286,8 +257,8 @@ const update = async (identity, { query = {}, item }, isAccess, fireUser) => {
 
 
 //__________________remove
-const remove = async (identity, { query = {} }, isAccess, fireUser) => {
-    DataStore.checkQry(query, identity);
+const remove = (identity, { query = {} }, isAccess, fireUser) => {
+    DbHelper.checkQry(query, identity);
 
     let Qry;
     if (isAccess === 'admin') {
@@ -297,19 +268,14 @@ const remove = async (identity, { query = {} }, isAccess, fireUser) => {
             Qry = query;
         } else {
             if (isAccess.access == 'own') {
-                Qry = DataStore.getOwnQry(query, fireUser);
+                Qry = DbHelper.getOwnQry(query, fireUser);
             } else if (isAccess.access == 'group') {
-                Qry = DataStore.getGroupQry(query, fireUser);
+                Qry = DbHelper.getGroupQry(query, fireUser);
             }
         }
     }
 
     if (Qry) {
-        if (identity === "collections") {
-            const jM = DataStore.getCollection(identity).findOne(Qry);
-            DataStore.removeCollection(jM.identity);
-        }
-
         DataStore.getCollection(identity).chain().find(Qry).remove();
         return true;
     }
@@ -319,7 +285,7 @@ const remove = async (identity, { query = {} }, isAccess, fireUser) => {
 
 
 //__________________count
-const count = async (identity, { query = {} }, isAccess, fireUser) => {
+const count = (identity, { query = {} }, isAccess, fireUser) => {
     return DataStore.getCollection(identity).chain().find(query).count();
 }
 

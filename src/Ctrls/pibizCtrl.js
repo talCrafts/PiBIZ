@@ -1,7 +1,8 @@
 const DataStore = require('../DataStores/DataStore');
+const _ = require("../Utils/lowDash");
 
 //______________________________________  Get Access Groups
-exports.getAccessGroups = async () => {
+exports.getAccessGroups = () => {
     const grps = DataStore.getCollection('groups').find().map(function (obj) {
         return obj.name;
     });
@@ -11,7 +12,7 @@ exports.getAccessGroups = async () => {
 };
 
 //______________________________________  Get Account Groups
-exports.getAccountGroups = async () => {
+exports.getAccountGroups = () => {
     const grps = DataStore.getCollection('groups').find().map(function (obj) {
         return obj.name;
     });
@@ -21,29 +22,75 @@ exports.getAccountGroups = async () => {
 };
 
 //______________________________________  Get Exec Actions
-exports.getActions = async () => {
+exports.getActions = () => {
     return ['find', 'findOne', 'create', 'update', 'remove', 'count'];
 };
 
 //______________________________________  Get Access Actions
-exports.getAccessActions = async () => {
+exports.getAccessActions = () => {
     return ['deny', 'own', 'group', 'allow'];
 };
 
 //______________________________________  Get FieldTypes
-exports.getFieldTypes = async () => {
+exports.getFieldTypes = () => {
     return [
         'array', 'boolean', 'radio', 'collection', 'select', 'date',
         'file', 'object', 'text', 'password', 'textarea', 'time'
     ];
 };
 
+//______________________________________  Get JModel
+exports.getJModel = ({ identity, pick = [] }) => {
+    let jModel = DataStore.getJModel(identity);
+    if (_.size(pick)) {
+        jModel = _.pick(jModel, [...pick, 'identity']);
+    }
+    return jModel;
+}
+
+//______________________________________  Get ALL JModels
+exports.getJModels = ({ kind, pick = [] }) => {
+    const jModels = DataStore.getJModels();
+    const arr = [];
+    if (kind == 'all') {
+        for (const jModelKey in jModels) {
+            let jModel = jModels[jModelKey];
+            if (_.size(pick)) {
+                jModel = _.pick(jModel, [...pick, 'identity']);
+            }
+            arr.push(jModel);
+        }
+    } else if (kind == 'core') {
+        for (const jModelKey in jModels) {
+            let jModel = jModels[jModelKey];
+            if (jModel.kind === 'core') {
+                if (_.size(pick)) {
+                    jModel = _.pick(jModel, [...pick, 'identity']);
+                }
+                arr.push(jModel);
+            }
+        }
+    } else {
+        for (const jModelKey in jModels) {
+            let jModel = jModels[jModelKey];
+            if (jModel.kind !== 'core') {
+                if (_.size(pick)) {
+                    jModel = _.pick(jModel, [...pick, 'identity']);
+                }
+                arr.push(jModel);
+            }
+        }
+    }
+
+    return arr;
+}
 
 //______________________________________  Get ListView
-exports.getListView = async ({ identity }, isAccess, fireUser) => {
+exports.getListView = ({ identity }, isAccess, fireUser) => {
     let columns = ['_id'];
-    let Collection = DataStore.getCollection("collections").findOne({ identity });
-    (Collection.fields || []).forEach(field => {
+    //let Collection = DataStore.getCollection("collections").findOne({ identity });
+    let jModel = DataStore.getJModel(identity);
+    (jModel.fields || []).forEach(field => {
         if (field.unique === true || field.indexed === true) {
             columns.push(field.name);
         }
@@ -54,11 +101,12 @@ exports.getListView = async ({ identity }, isAccess, fireUser) => {
 
 
 //______________________________________  Get FormView create/udate
-exports.getFormView = async ({ identity, _id }, isAccess, fireUser) => {
-    let Collection = DataStore.getCollection("collections").findOne({ identity });
+exports.getFormView = ({ identity, _id }, isAccess, fireUser) => {
+    //let Collection = DataStore.getCollection("collections").findOne({ identity });
+    let jModel = DataStore.getJModel(identity);
     const formFields = [];
 
-    (Collection.fields || []).forEach(field => {
+    (jModel.fields || []).forEach(field => {
         formFields.push(parseFieldType(field, !_id));
     });
 
